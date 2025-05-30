@@ -33,7 +33,6 @@ linters:
     - misspell
     - mnd
     - nakedret
-    - nestif
     - nlreturn
     - noctx
     - nolintlint

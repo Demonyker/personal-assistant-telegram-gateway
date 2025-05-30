@@ -1,28 +1,28 @@
-package tgBot
+package tgbot
 
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	v1 "github.com/Demonyker/personal-assistant-contracts/contracts/users/v1"
 	"github.com/Demonyker/personal-assistant-telegram-gateway/internal/repo"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"strconv"
 )
 
 // UseCase -.
 type UseCase struct {
-	repo repo.UsersMicro
-	bot  *tgbotapi.BotAPI
+	repository repo.UsersMicro
+	bot        *tgbotapi.BotAPI
 }
 
 // New -.
-func New(repo repo.UsersMicro, bot *tgbotapi.BotAPI) *UseCase {
-	return &UseCase{repo: repo, bot: bot}
+func New(repository repo.UsersMicro, bot *tgbotapi.BotAPI) *UseCase {
+	return &UseCase{repository: repository, bot: bot}
 }
 
-func (u *UseCase) CreateUser(ctx context.Context, telegramId, chatId int64, firstName, lastName string) (*v1.User, error) {
-	existedUser, err := u.repo.GetByTelegramId(ctx, strconv.Itoa(int(telegramId)))
-
+func (u *UseCase) CreateUser(ctx context.Context, telegramID, chatID int64, firstName, lastName string) (*v1.User, error) {
+	existedUser, err := u.repository.GetByTelegramID(ctx, strconv.Itoa(int(telegramID)))
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,7 @@ func (u *UseCase) CreateUser(ctx context.Context, telegramId, chatId int64, firs
 		return existedUser, nil
 	}
 
-	createdUser, err := u.repo.CreateUser(ctx, strconv.Itoa(int(telegramId)), strconv.Itoa(int(chatId)), firstName, &lastName)
-
+	createdUser, err := u.repository.CreateUser(ctx, strconv.Itoa(int(telegramID)), strconv.Itoa(int(chatID)), firstName, &lastName)
 	if err != nil {
 		return nil, err
 	}
@@ -50,12 +49,18 @@ func (u *UseCase) GetUpdates(ctx context.Context, updates tgbotapi.UpdatesChanne
 			} else {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Добро пожаловать, %s %s !", user.FirstName, *user.LastName))
 
-				u.bot.Send(msg)
+				_, err = u.bot.Send(msg)
+				if err != nil {
+					errorsChannel <- err
+				}
 			}
 		} else {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Пожалуйста, введите команду /start")
 
-			u.bot.Send(msg)
+			_, err := u.bot.Send(msg)
+			if err != nil {
+				errorsChannel <- err
+			}
 		}
 	}
 }
