@@ -1,0 +1,25 @@
+version: "3.9"
+
+x-backend-app-environment: &x-backend-app-environment
+  GOMAXPROCS: ${GOMAXPROCS}
+  # App
+  APP_NAME: ${APP_NAME}
+  APP_VERSION: ${APP_VERSION}
+  # Logger
+  LOG_LEVEL: ${LOG_LEVEL}
+  # TG
+  TG_BOT_KEY: ${TG_BOT_KEY}
+  # GRPC
+  USERS_MICRO_ADDR: ${USERS_MICRO_ADDR}
+
+services:
+  telegram_gateway:
+    container_name: telegram_gateway
+    platform: linux/amd64
+    pid: "host"
+    build:
+      context: .
+    environment:
+      <<: *x-backend-app-environment
+    env_file:
+      - .env
